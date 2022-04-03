@@ -1,5 +1,10 @@
 package com.asd.prirserver.model;
 
+
+
+import org.hibernate.search.mapper.pojo.mapping.definition.annotation.FullTextField;
+import org.hibernate.search.mapper.pojo.mapping.definition.annotation.Indexed;
+
 import javax.persistence.*;
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
@@ -12,6 +17,7 @@ import java.util.Set;
  * Posiada pola id, username, email, password oraz kolekcję ról
  */
 @Entity
+@Indexed
 @Table(	name = "users",
         uniqueConstraints = {
                 @UniqueConstraint(columnNames = "username"),
@@ -25,6 +31,7 @@ public class User
 
     @NotBlank
     @Size(max = 20)
+    @FullTextField
     private String username;
 
     @NotBlank
