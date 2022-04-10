@@ -3,13 +3,11 @@ package com.asd.prirserver.controller;
 
 import com.asd.prirserver.service.ChatRoomService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/chat-room")
+@CrossOrigin("*")
 public class ChatRoomController {
 
     private final ChatRoomService chatRoomService;
