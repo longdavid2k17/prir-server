@@ -1,16 +1,21 @@
 package com.asd.prirserver.model;
 
 
+import org.hibernate.search.mapper.pojo.mapping.definition.annotation.FullTextField;
+import org.hibernate.search.mapper.pojo.mapping.definition.annotation.Indexed;
+
 import javax.persistence.*;
 
 @Entity
 @Table(name = "chat_room")
+@Indexed
 public class ChatRoom {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @FullTextField(analyzer = "name")
     @Column(name = "room_name")
     private String name;
 

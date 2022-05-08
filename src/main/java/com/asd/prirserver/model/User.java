@@ -31,7 +31,7 @@ public class User
 
     @NotBlank
     @Size(max = 20)
-    @FullTextField
+    @FullTextField(analyzer = "name")
     private String username;
 
     @NotBlank

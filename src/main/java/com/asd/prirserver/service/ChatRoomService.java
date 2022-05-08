@@ -2,11 +2,13 @@ package com.asd.prirserver.service;
 
 
 import com.asd.prirserver.model.ChatRoom;
+import com.asd.prirserver.model.User;
 import com.asd.prirserver.repository.ChatRoomRepository;
 import com.asd.prirserver.utils.ToJsonString;
 
 import org.hibernate.search.engine.search.query.SearchResult;
 import org.hibernate.search.mapper.orm.Search;
+import org.hibernate.search.mapper.orm.massindexing.MassIndexer;
 import org.hibernate.search.mapper.orm.session.SearchSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
 import java.util.List;
 import java.util.Optional;
 
@@ -22,11 +25,12 @@ public class ChatRoomService {
 
     private final Logger LOGGER = LoggerFactory.getLogger(ChatRoomService.class);
     private final ChatRoomRepository chatRoomRepository;
-    private final  EntityManager entityManager;
+    @PersistenceContext
+    private EntityManager entityManager;
 
-    public ChatRoomService(ChatRoomRepository chatRoomRepository, EntityManager entityManager) {
+    public ChatRoomService(ChatRoomRepository chatRoomRepository) {
         this.chatRoomRepository = chatRoomRepository;
-        this.entityManager = entityManager;
+
     }
 
     public ResponseEntity<?> getAll()
@@ -78,11 +82,15 @@ public class ChatRoomService {
         try
         {
             SearchSession searchSession = Search.session( entityManager );
-            SearchResult<ChatRoom> result =searchSession.search(ChatRoom.class).where(f->f.match().field("name").matching(
-                    name)
-            ).fetch(20);
+            MassIndexer indexer = searchSession.massIndexer( ChatRoom.class )
+                    .threadsToLoadObjects( 3 );
+            indexer.startAndWait();
 
-            long totalHitCount = result.total().hitCount();
+            SearchResult<ChatRoom> result =Search.session(entityManager).search(
+                    ChatRoom.class).where(f->f.wildcard().fields("name").matching(
+                    name+"*"
+            )).fetchAll();
+
             List<ChatRoom> hits = result.hits();
 
             return ResponseEntity.ok().body(hits);
@@ -93,6 +101,25 @@ public class ChatRoomService {
             LOGGER.error(e.getMessage());
             return ResponseEntity.badRequest().body(ToJsonString.toJsonString("Wystąpił błąd podczas wyszukiwania pokoju czatowego"));
 
+        }
+    }
+
+    public ResponseEntity<?> createRoom(ChatRoom chatRoom) {
+        try{
+
+            if(chatRoom!=null)
+            {
+                ChatRoom saved =chatRoomRepository.save(chatRoom);
+                return ResponseEntity.ok().body(saved);
+            }
+            else {
+                return ResponseEntity.badRequest().body(ToJsonString.toJsonString("Przesłany obiekt jest pusty"));
+            }
+
+        }catch (Exception e)
+        {
+            e.printStackTrace();
+            return ResponseEntity.badRequest().body(ToJsonString.toJsonString("Nie udało się stworzyc pokoju czatowego"));
         }
     }
 }

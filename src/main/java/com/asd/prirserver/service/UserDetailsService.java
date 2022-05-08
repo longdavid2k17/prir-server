@@ -8,6 +8,7 @@ import com.asd.prirserver.utils.ToJsonString;
 
 import org.hibernate.search.engine.search.query.SearchResult;
 import org.hibernate.search.mapper.orm.Search;
+import org.hibernate.search.mapper.orm.massindexing.MassIndexer;
 import org.hibernate.search.mapper.orm.session.SearchSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Service;
 
 import javax.imageio.ImageIO;
 import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.ArrayList;
@@ -28,12 +30,13 @@ public class UserDetailsService {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final Logger LOGGER = LoggerFactory.getLogger(UserDetailsService.class);
-    private final EntityManager entityManager;
+    @PersistenceContext
+    private EntityManager entityManager;
 
-    public UserDetailsService(UserRepository userRepository, RoleRepository roleRepository, EntityManager entityManager) {
+    public UserDetailsService(UserRepository userRepository, RoleRepository roleRepository) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
-        this.entityManager = entityManager;
+
     }
 
 
@@ -41,14 +44,14 @@ public class UserDetailsService {
     {
         try{
 
-            List<BufferedImage> avatars= new ArrayList<>();
+            List<String> avatars= new ArrayList<>();
              final File dir = new File("avatars");
             if (dir.isDirectory()) {
                 for (final File f : Objects.requireNonNull(dir.listFiles())) {
                     BufferedImage img = null;
                     img = ImageIO.read(f);
                     if(img!=null)
-                    avatars.add(img);
+                    avatars.add(f.getAbsolutePath());
                 }
             }
 
@@ -70,11 +73,15 @@ public class UserDetailsService {
         {
 
             SearchSession searchSession = Search.session( entityManager );
-            SearchResult<User> result =searchSession.search(User.class).where(f->f.match().field("username").matching(
-                    userName)
-            ).fetch(20);
+            MassIndexer indexer = searchSession.massIndexer( User.class )
+                    .threadsToLoadObjects( 3 );
+            indexer.startAndWait();
 
-            long totalHitCount = result.total().hitCount();
+            SearchResult<User> result =Search.session(entityManager).search(
+                    User.class).where(f->f.wildcard().fields("username").matching(
+                    userName+"*"
+            )).fetchAll();
+
             List<User> hits = result.hits();
 
 

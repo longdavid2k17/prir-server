@@ -1,6 +1,7 @@
 package com.asd.prirserver.controller;
 
 
+import com.asd.prirserver.model.ChatRoom;
 import com.asd.prirserver.service.ChatRoomService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -32,6 +33,12 @@ public class ChatRoomController {
     public ResponseEntity<?> getById(@RequestParam("name")String name)
     {
         return chatRoomService.getByName(name);
+    }
+
+    @GetMapping("/create-room")
+    public ResponseEntity<?> createRoom(@RequestBody ChatRoom chatRoom)
+    {
+        return chatRoomService.createRoom(chatRoom);
     }
 
     @GetMapping("/search")
