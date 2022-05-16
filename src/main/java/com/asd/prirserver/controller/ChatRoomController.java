@@ -35,7 +35,7 @@ public class ChatRoomController {
         return chatRoomService.getByName(name);
     }
 
-    @GetMapping("/create-room")
+    @PostMapping("/create-room")
     public ResponseEntity<?> createRoom(@RequestBody ChatRoom chatRoom)
     {
         return chatRoomService.createRoom(chatRoom);
