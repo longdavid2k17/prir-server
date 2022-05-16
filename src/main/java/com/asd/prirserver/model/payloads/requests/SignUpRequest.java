@@ -28,7 +28,17 @@ public class SignUpRequest
 
     private Set<String> role;
 
+    private Long avatar;
+
     public SignUpRequest() {
+    }
+
+    public Long getAvatar() {
+        return avatar;
+    }
+
+    public void setAvatar(Long avatar) {
+        this.avatar = avatar;
     }
 
     public String getUsername() {

@@ -43,6 +43,8 @@ public class User
     @Size(max = 120)
     private String password;
 
+    private Long avatar;
+
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(	name = "user_roles",
             joinColumns = @JoinColumn(name = "user_id"),
@@ -58,6 +60,14 @@ public class User
         this.email = email;
         this.password = password;
         this.roles = roles;
+    }
+
+    public Long getAvatar() {
+        return avatar;
+    }
+
+    public void setAvatar(Long avatar) {
+        this.avatar = avatar;
     }
 
     public Long getId() {
