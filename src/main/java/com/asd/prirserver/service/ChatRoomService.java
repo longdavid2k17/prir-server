@@ -2,7 +2,6 @@ package com.asd.prirserver.service;
 
 
 import com.asd.prirserver.model.ChatRoom;
-import com.asd.prirserver.model.User;
 import com.asd.prirserver.repository.ChatRoomRepository;
 import com.asd.prirserver.utils.ToJsonString;
 
@@ -13,6 +12,7 @@ import org.hibernate.search.mapper.orm.session.SearchSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityManager;
@@ -27,10 +27,12 @@ public class ChatRoomService {
     private final ChatRoomRepository chatRoomRepository;
     @PersistenceContext
     private EntityManager entityManager;
+    private PasswordEncoder passwordEncoder;
 
-    public ChatRoomService(ChatRoomRepository chatRoomRepository) {
+    public ChatRoomService(ChatRoomRepository chatRoomRepository, PasswordEncoder passwordEncoder) {
         this.chatRoomRepository = chatRoomRepository;
 
+        this.passwordEncoder = passwordEncoder;
     }
 
     public ResponseEntity<?> getAll()
@@ -109,6 +111,8 @@ public class ChatRoomService {
 
             if(chatRoom!=null)
             {
+                String haselko =chatRoom.getRoomPassword();
+                chatRoom.setRoomPassword(passwordEncoder.encode(haselko));
                 ChatRoom saved =chatRoomRepository.save(chatRoom);
                 return ResponseEntity.ok().body(saved);
             }

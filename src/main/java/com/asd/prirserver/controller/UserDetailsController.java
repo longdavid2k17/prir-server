@@ -30,7 +30,7 @@ public class UserDetailsController {
         return userDetailsService.searchByUserName(username);
     }
 
-    @GetMapping("avatars")
+    @GetMapping("/avatars")
     public ResponseEntity<?> getAvatars()
     {
         return  userDetailsService.getListAvatars();
