@@ -25,6 +25,11 @@ public class Message
     @Column(name = "post_date")
     private Date postDate;
 
+    @Transient
+    private Long authorId;
+    @Transient
+    private Long chatRoomId;
+
     public Message() {
     }
 
@@ -34,6 +39,22 @@ public class Message
         this.message = message;
         this.author = author;
         this.postDate = postDate;
+    }
+
+    public Long getAuthorId() {
+        return authorId;
+    }
+
+    public void setAuthorId(Long authorId) {
+        this.authorId = authorId;
+    }
+
+    public Long getChatRoomId() {
+        return chatRoomId;
+    }
+
+    public void setChatRoomId(Long chatRoomId) {
+        this.chatRoomId = chatRoomId;
     }
 
     public Long getId() {

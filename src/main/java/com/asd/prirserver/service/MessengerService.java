@@ -2,15 +2,19 @@ package com.asd.prirserver.service;
 
 import com.asd.prirserver.model.ChatRoom;
 import com.asd.prirserver.model.Message;
+import com.asd.prirserver.model.User;
 import com.asd.prirserver.repository.ChatRoomRepository;
 import com.asd.prirserver.repository.MessageRepository;
+import com.asd.prirserver.repository.UserRepository;
 import com.asd.prirserver.utils.ToJsonString;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.crypto.BadPaddingException;
+import javax.crypto.IllegalBlockSizeException;
+import java.security.InvalidKeyException;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
@@ -21,14 +25,17 @@ public class MessengerService
 {
     private final MessageRepository messageRepository;
     private final ChatRoomRepository chatRoomRepository;
-    private final PasswordEncoder passwordEncoder;
+    private final CipherService cipherService;
+    private final UserRepository userRepository;
 
     public MessengerService(MessageRepository messageRepository,
                             ChatRoomRepository chatRoomRepository,
-                            PasswordEncoder passwordEncoder) {
+                            CipherService cipherService,
+                            UserRepository userRepository) {
         this.messageRepository = messageRepository;
         this.chatRoomRepository = chatRoomRepository;
-        this.passwordEncoder = passwordEncoder;
+        this.cipherService = cipherService;
+        this.userRepository = userRepository;
     }
 
     public ResponseEntity<?> findAllForRoom(Long id){
@@ -36,6 +43,21 @@ public class MessengerService
             Optional<ChatRoom> chatRoomOptional = chatRoomRepository.findById(id);
             if(chatRoomOptional.isEmpty()) return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ToJsonString.toJsonString("Nie znaleziono pokoju o ID="+id));
             List<Message> messageList = messageRepository.findAllByChatRoom(chatRoomOptional.get());
+            messageList.forEach(e->{
+                String tmpMessage;
+                if(e.getMessage()!=null) {
+                    try {
+                        tmpMessage = cipherService.decrypt(e.getMessage());
+                        e.setMessage(tmpMessage);
+                    } catch (InvalidKeyException ex) {
+                        ex.printStackTrace();
+                    } catch (IllegalBlockSizeException ex) {
+                        ex.printStackTrace();
+                    } catch (BadPaddingException ex) {
+                        ex.printStackTrace();
+                    }
+                }
+            });
             messageList.sort(Comparator.comparing(Message::getPostDate,Comparator.nullsLast(Comparator.reverseOrder())));
             return ResponseEntity.ok().body(messageList);
         }
@@ -49,8 +71,18 @@ public class MessengerService
     public ResponseEntity<?> send(Message entity) {
         try {
             if(entity.getMessage()==null) return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ToJsonString.toJsonString("Brak treści wiadomości!"));
+            if(entity.getAuthorId()==null && entity.getAuthor()==null) return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ToJsonString.toJsonString("Brak parametru autora!"));
             entity.setPostDate(new Date());
-            entity.setMessage(passwordEncoder.encode(entity.getMessage()));
+            if(entity.getChatRoomId()!=null){
+                Optional<ChatRoom> chatRoomOptional = chatRoomRepository.findById(entity.getChatRoomId());
+                chatRoomOptional.ifPresent(entity::setChatRoom);
+            }
+            if(entity.getAuthorId()!=null){
+                Optional<User> userOptional = userRepository.findById(entity.getAuthorId());
+                userOptional.ifPresent(entity::setAuthor);
+            }
+            if(entity.getAuthor()==null) return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ToJsonString.toJsonString("Brak nadawcy!"));
+            entity.setMessage(cipherService.encrypt(entity.getMessage()));
             Message saved = messageRepository.save(entity);
             return ResponseEntity.ok().body(saved);
         }
