@@ -111,8 +111,10 @@ public class ChatRoomService {
 
             if(chatRoom!=null)
             {
-                String haselko =chatRoom.getRoomPassword();
-                chatRoom.setRoomPassword(passwordEncoder.encode(haselko));
+                if(chatRoom.getRoomPassword()!=null) {
+                    String haselko = chatRoom.getRoomPassword();
+                    chatRoom.setRoomPassword(passwordEncoder.encode(haselko));
+                }
                 ChatRoom saved =chatRoomRepository.save(chatRoom);
                 return ResponseEntity.ok().body(saved);
             }
