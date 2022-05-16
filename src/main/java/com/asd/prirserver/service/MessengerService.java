@@ -12,9 +12,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.crypto.BadPaddingException;
-import javax.crypto.IllegalBlockSizeException;
-import java.security.InvalidKeyException;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
@@ -46,16 +43,8 @@ public class MessengerService
             messageList.forEach(e->{
                 String tmpMessage;
                 if(e.getMessage()!=null) {
-                    try {
-                        tmpMessage = cipherService.decrypt(e.getMessage());
-                        e.setMessage(tmpMessage);
-                    } catch (InvalidKeyException ex) {
-                        ex.printStackTrace();
-                    } catch (IllegalBlockSizeException ex) {
-                        ex.printStackTrace();
-                    } catch (BadPaddingException ex) {
-                        ex.printStackTrace();
-                    }
+                    tmpMessage = cipherService.decrypt(e.getMessage());
+                    e.setMessage(tmpMessage);
                 }
             });
             messageList.sort(Comparator.comparing(Message::getPostDate,Comparator.nullsLast(Comparator.reverseOrder())));
