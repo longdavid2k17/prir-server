@@ -2,6 +2,7 @@ package com.asd.prirserver.service;
 
 
 import com.asd.prirserver.model.ChatRoom;
+import com.asd.prirserver.model.payloads.requests.JoinRoomRequest;
 import com.asd.prirserver.repository.ChatRoomRepository;
 import com.asd.prirserver.utils.ToJsonString;
 
@@ -12,6 +13,8 @@ import org.hibernate.search.mapper.orm.session.SearchSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.bcrypt.BCrypt;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -126,6 +129,50 @@ public class ChatRoomService {
         {
             e.printStackTrace();
             return ResponseEntity.badRequest().body(ToJsonString.toJsonString("Nie udało się stworzyc pokoju czatowego"));
+        }
+    }
+
+    public ResponseEntity<?> joinRoom(JoinRoomRequest joinRoomRequest) {
+        try
+        {
+            if(joinRoomRequest.getRoomName()!=null)
+            {
+                Optional<ChatRoom> chatRoomOptional =chatRoomRepository.findByNameEquals(joinRoomRequest.getRoomName());
+                if(chatRoomOptional.isPresent())
+                {
+                    if(chatRoomOptional.get().getRoomPassword()!=null)
+                    {
+
+                        if(passwordEncoder.matches(joinRoomRequest.getPassword(), chatRoomOptional.get().getRoomPassword()))
+                        {
+
+                            return ResponseEntity.ok().body(chatRoomOptional.get().getId());
+                        }
+                        else
+                        {
+                            return ResponseEntity.badRequest().body(ToJsonString.toJsonString("Podano niepoprawne hasło"));
+                        }
+
+                    }
+                    else {
+
+                        return ResponseEntity.ok().body(chatRoomOptional.get().getId());
+                    }
+                }
+                else
+                {
+                    return  ResponseEntity.badRequest().body(ToJsonString.toJsonString("Pokuj o takiej nazwie nie istnieje"));
+                }
+            }
+            else
+            {
+               return  ResponseEntity.badRequest().body(ToJsonString.toJsonString("Nie podano nazwy pokoju"));
+            }
+
+        }catch (Exception e)
+        {
+            e.printStackTrace();
+            return ResponseEntity.badRequest().body(ToJsonString.toJsonString("Nie udało się dołączytć do pokoju"));
         }
     }
 }
