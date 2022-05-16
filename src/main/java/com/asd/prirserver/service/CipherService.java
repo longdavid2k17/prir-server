@@ -14,7 +14,7 @@ import java.security.NoSuchAlgorithmException;
 @Service
 public class CipherService {
 
-    private final String key = "Bar12678Asssvrhg45Bar12345"; // 128 bit key
+    private final String key = "Bar12345Bar12345"; // 128 bit key
     private final Key aesKey;
     private final Cipher cipher;
     public CipherService() throws NoSuchPaddingException, NoSuchAlgorithmException {
