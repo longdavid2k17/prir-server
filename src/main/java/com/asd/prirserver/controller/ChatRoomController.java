@@ -42,7 +42,7 @@ public class ChatRoomController {
         return chatRoomService.createRoom(chatRoom);
     }
 
-    @GetMapping("/join-room")
+    @PostMapping("/join-room")
     public ResponseEntity<?> joinRoom(@RequestBody JoinRoomRequest joinRoomRequest)
     {
         return chatRoomService.joinRoom(joinRoomRequest);
